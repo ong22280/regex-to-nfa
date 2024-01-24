@@ -166,11 +166,7 @@ const RegexToNFA: React.FC = () => {
           }
           // Check if the edge already exists
           if (!edges.find((edge) => edge.from === from && edge.to === to2)) {
-            addEdge(from, to2, "e");
-          }
-
-          if (!edges.find((edge) => edge.from === to2 && edge.to === from)) {
-            addEdge(to2, from, "e");
+            addEdge(from, to2, "");
           }
         } else {
           // Check if the edge already exists
@@ -233,7 +229,7 @@ const RegexToNFA: React.FC = () => {
 
       <div className="mt-6">
         {graphData && (
-          <div className="mt-8">
+          <div className="mt-8 h-96">
             <h2 className="text-3xl font-bold mb-4">NFA Graph</h2>
             <Graph graph={graphData} options={graphOptions} />
           </div>
