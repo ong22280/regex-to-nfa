@@ -19,8 +19,6 @@ const RegexToNFA: React.FC = () => {
     }
   };
 
-  // ... (previous code)
-
   const getGraphData = (): any => {
     if (!nfa) return { nodes: [], edges: [] };
 

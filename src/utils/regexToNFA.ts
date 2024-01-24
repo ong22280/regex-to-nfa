@@ -1,7 +1,9 @@
 export type NFA = {
+  states: Set<string>;
+  alphabet: Set<string>;
+  transitions: Array<{ from: string; to: string; symbol: string }>;
   start: string;
-  accept: string[];
-  transitions: { from: string; to: string; symbol: string }[];
+  accept: Set<string>;
 };
 
 const epsilon = "ε";
@@ -12,104 +14,202 @@ const generateStateName = (): string => {
   return `S${stateCounter++}`;
 };
 
-// ... (previous code)
-
 const regexToNFA = (regex: string): NFA => {
-  const stack: NFA[] = [];
+  let nfa: NFA = {
+    states: new Set(),
+    alphabet: new Set(),
+    transitions: [],
+    start: "",
+    accept: new Set(),
+  };
 
-  for (let i = 0; i < regex.length; i++) {
-    const char = regex[i];
+  const handleConcatenation = (expr1: NFA, expr2: NFA): void => {
+    let localNfa: NFA = {
+      states: new Set(),
+      alphabet: new Set(),
+      transitions: [],
+      start: "",
+      accept: new Set(),
+    };
 
-    if (char === "(") {
-      stack.push({ start: "", accept: [], transitions: [] });
-    } else if (char === ")") {
-      const groupNFA = stack.pop() || {
-        start: "",
-        accept: [],
+    localNfa = {
+      states: new Set([...expr1.states, ...expr2.states]),
+      alphabet: new Set([...expr1.alphabet, ...expr2.alphabet]),
+      transitions: [
+        ...expr1.transitions,
+        ...expr2.transitions,
+        ...Array.from(expr1.accept).map((acceptState) => ({
+          from: acceptState,
+          to: expr2.start,
+          symbol: epsilon,
+        })),
+      ],
+      start: expr1.start,
+      accept: new Set([...expr2.accept]),
+    };
+
+    nfa = { ...localNfa };
+  };
+
+  const handleUnion = (expr1: NFA, expr2: NFA): void => {
+    let localNfa: NFA = {
+      states: new Set(),
+      alphabet: new Set(),
+      transitions: [],
+      start: "",
+      accept: new Set(),
+    };
+
+    localNfa = {
+      states: new Set([...expr1.states, ...expr2.states]),
+      alphabet: new Set([...expr1.alphabet, ...expr2.alphabet]),
+      transitions: [
+        { from: generateStateName(), to: expr1.start, symbol: epsilon },
+        { from: generateStateName(), to: expr2.start, symbol: epsilon },
+        ...expr1.transitions,
+        ...expr2.transitions,
+      ],
+      start: localNfa.transitions[0].from,
+      accept: new Set([...expr1.accept, ...expr2.accept]),
+    };
+
+    nfa = { ...localNfa };
+  };
+
+  const handleKleeneStar = (expr: NFA): void => {
+    let localNfa: NFA = {
+      states: new Set([...expr.states]),
+      alphabet: new Set([...expr.alphabet]),
+      transitions: [
+        ...expr.transitions,
+        ...Array.from(expr.accept).map((acceptState) => ({
+          from: acceptState,
+          to: expr.start,
+          symbol: epsilon,
+        })),
+        { from: generateStateName(), to: expr.start, symbol: epsilon },
+      ],
+      start: "",
+      accept: new Set([...expr.accept]),
+    };
+
+    // Update the start and accept states
+    localNfa.start = generateStateName();
+    localNfa.accept = new Set([localNfa.start, ...expr.accept]);
+
+    nfa = { ...localNfa };
+  };
+
+
+  const handleSingleCharacter = (character: string): NFA => {
+    const startState = generateStateName();
+    const acceptState = generateStateName();
+
+    const singleCharacterNFA: NFA = {
+      states: new Set([startState, acceptState]),
+      alphabet: new Set([character]),
+      transitions: [{ from: startState, to: acceptState, symbol: character }],
+      start: startState,
+      accept: new Set([acceptState]),
+    };
+
+    return singleCharacterNFA;
+  };
+
+  const handleExpression = (expr: string): NFA => {
+    let currentNFA: NFA | null = null;
+    let index = 0;
+
+    const getNextToken = (): string => {
+      return expr[index++];
+    };
+
+    const parseFactor = (): NFA => {
+      let localNfa: NFA = {
+        states: new Set(),
+        alphabet: new Set(),
         transitions: [],
+        start: "",
+        accept: new Set(),
       };
-      const prevNFA = stack.pop();
 
-      if (prevNFA) {
-        const newStart = generateStateName();
-        const newAccept = generateStateName();
-        const transitions = [
-          { from: newStart, to: prevNFA.start, symbol: epsilon },
-          ...prevNFA.transitions,
-          { from: prevNFA.accept[0], to: groupNFA.start, symbol: epsilon },
-          ...groupNFA.transitions,
-          { from: groupNFA.accept[0], to: newAccept, symbol: epsilon },
-          { from: newStart, to: newAccept, symbol: epsilon },
-        ];
+      const token = getNextToken();
 
-        stack.push({ start: newStart, accept: [newAccept], transitions });
+      if (token === "(") {
+        const factorNFA = parseExpression();
+        if (getNextToken() !== ")") {
+          throw new Error("Missing closing parenthesis");
+        }
+        return factorNFA;
+      } else if (token === "|") {
+        throw new Error("Unexpected union operator");
+      } else if (token === "*") {
+        throw new Error("Unexpected Kleene star operator");
       } else {
-        stack.push(groupNFA);
+        return handleSingleCharacter(token);
       }
-    } else if (char === "|") {
-      const orNFA2 = stack.pop() || { start: "", accept: [], transitions: [] };
-      const orNFA1 = stack.pop() || { start: "", accept: [], transitions: [] };
+    };
 
-      const newStart = generateStateName();
-      const newAccept = generateStateName();
-      const transitions = [
-        { from: newStart, to: orNFA1.start, symbol: epsilon },
-        { from: newStart, to: orNFA2.start, symbol: epsilon },
-        ...orNFA1.transitions,
-        ...orNFA2.transitions,
-        { from: orNFA1.accept[0], to: newAccept, symbol: epsilon },
-        { from: orNFA2.accept[0], to: newAccept, symbol: epsilon },
-      ];
-
-      stack.push({ start: newStart, accept: [newAccept], transitions });
-    } else if (char === "*") {
-      const prevNFA = stack.pop();
-
-      if (prevNFA) {
-        const newStart = generateStateName();
-        const newAccept = generateStateName();
-        const transitions = [
-          { from: newStart, to: prevNFA.start, symbol: epsilon },
-          ...prevNFA.transitions,
-          { from: prevNFA.accept[0], to: newAccept, symbol: epsilon },
-          { from: newAccept, to: prevNFA.start, symbol: epsilon },
-          { from: newStart, to: newAccept, symbol: epsilon },
-        ];
-
-        stack.push({ start: newStart, accept: [newAccept], transitions });
-      }
-    } else {
-      const newStart = generateStateName();
-      const newAccept = generateStateName();
-      const transitions = [{ from: newStart, to: newAccept, symbol: char }];
-
-      stateCounter++;
-
-      stack.push({ start: newStart, accept: [newAccept], transitions });
-    }
-  }
-
-  // Handle concatenation by connecting adjacent NFAs
-  const concatenatedNFA = stack.reduce((resultNFA, currentNFA) => {
-    if (resultNFA) {
-      const newTransitions = [
-        ...resultNFA.transitions,
-        { from: resultNFA.accept[0], to: currentNFA.start, symbol: epsilon },
-        ...currentNFA.transitions,
-      ];
-
-      return {
-        start: resultNFA.start,
-        accept: [currentNFA.accept[0]],
-        transitions: newTransitions,
+    const parseExpression = (): NFA => {
+      let localNfa: NFA = {
+        states: new Set(),
+        alphabet: new Set(),
+        transitions: [],
+        start: "",
+        accept: new Set(),
       };
+
+      let expressionNFA = parseTerm();
+      let nextToken = expr[index];
+      while (nextToken === "|") {
+        index++;
+        const termNFA = parseTerm();
+        handleUnion(expressionNFA, termNFA);
+        expressionNFA = { ...nfa };
+        nextToken = expr[index];
+      }
+      return expressionNFA;
+    };
+
+    const parseTerm = (): NFA => {
+      let localNfa: NFA = {
+        states: new Set(),
+        alphabet: new Set(),
+        transitions: [],
+        start: "",
+        accept: new Set(),
+      };
+
+      let termNFA = parseFactor();
+      let nextToken = expr[index];
+      while (
+        nextToken &&
+        nextToken !== ")" &&
+        nextToken !== "|" &&
+        nextToken !== "*"
+      ) {
+        const factorNFA = parseFactor();
+        handleConcatenation(termNFA, factorNFA);
+        termNFA = { ...nfa };
+        nextToken = expr[index];
+      }
+      return termNFA;
+    };
+
+    try {
+      currentNFA = parseExpression();
+      handleKleeneStar(currentNFA);
+    } catch (error) {
+      console.error("Error parsing expression:", error);
+      throw new Error("Invalid regular expression");
     }
 
     return currentNFA;
-  }, null as NFA | null);
+  };
 
-  // If there's a single NFA left in the stack, return it; otherwise, return the concatenated NFA
-  return concatenatedNFA || stack[0];
+  handleExpression(regex);
+
+  return nfa;
 };
 
 export default regexToNFA;
