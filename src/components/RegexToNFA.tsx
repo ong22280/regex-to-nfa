@@ -166,7 +166,7 @@ const RegexToNFA: React.FC = () => {
           }
           // Check if the edge already exists
           if (!edges.find((edge) => edge.from === from && edge.to === to2)) {
-            addEdge(from, to2, "");
+            addEdge(from, to2, "e");
           }
         } else {
           // Check if the edge already exists
