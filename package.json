@@ -15,8 +15,10 @@
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-graph-vis": "^1.0.7",
     "tailwind-merge": "^2.2.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vis-network": "^9.1.9"
   },
   "devDependencies": {
     "typescript": "^5",
