@@ -19,10 +19,18 @@ const RegexToNFA: React.FC = () => {
     }
   };
 
+  // ... (previous code)
+
   const getGraphData = (): any => {
     if (!nfa) return { nodes: [], edges: [] };
 
-    const uniqueNodes: { [id: string]: { id: string; label: string } } = {};
+    const uniqueNodes: {
+      [id: string]: { id: string; label: string; color?: string };
+    } = {};
+
+    // Add a unique node for the start state
+    const startNodeId = "start";
+    uniqueNodes[startNodeId] = { id: startNodeId, label: "" };
 
     const edges = nfa.transitions.map((transition, index) => {
       uniqueNodes[transition.from] = {
@@ -39,8 +47,26 @@ const RegexToNFA: React.FC = () => {
       };
     });
 
+    // Add an edge from the start node to the actual start state
+    edges.push({
+      id: "start-edge",
+      from: startNodeId,
+      to: nfa.start,
+      label: "start",
+    });
+
+    // Apply different styles or labels to accept states
+    nfa.accept.forEach((acceptState) => {
+      if (uniqueNodes[acceptState]) {
+        uniqueNodes[acceptState].label = "Accept";
+        uniqueNodes[acceptState].color = "green"; // Change the color to green, for example
+      }
+    });
+
     return { nodes: Object.values(uniqueNodes), edges };
   };
+
+  // ... (remaining code)
 
   const graphData = getGraphData();
 
