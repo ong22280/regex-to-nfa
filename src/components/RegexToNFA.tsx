@@ -123,6 +123,10 @@ const RegexToNFA: React.FC = () => {
     const nodes: any[] = [];
     const edges: any[] = [];
 
+    // Reset nodes and edges arrays
+    nodes.length = 0;
+    edges.length = 0;
+
     const addNode = (id: number, label: string, color?: string) => {
       if (nodes.findIndex((node) => node.id === id) === -1) {
         nodes.push({ id, label, color });
@@ -187,59 +191,59 @@ const RegexToNFA: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto my-8 p-8 bg-gray-200 rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold mb-4">Regex to NFA Converter</h1>
-      <label className="block mb-4">
-        Enter Regular Expression:
+    <div className="container mx-auto my-8 p-8">
+      <h1 className="text-4xl font-bold mb-6 text-center text-blue-700">
+        Regex to NFA Converter
+      </h1>
+      <label className="block mb-6">
+        <span className="block text-xl mb-2">Enter Regular Expression:</span>
         <input
-          className="border p-2 w-full"
+          className="border p-3 w-full rounded-md focus:outline-none focus:ring focus:border-blue-500"
           type="text"
           value={regex}
           onChange={(e) => setRegex(e.target.value)}
         />
       </label>
       <button
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-300 w-full md:w-auto"
         onClick={convertToNFA}
       >
         Convert to NFA
       </button>
 
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Transition Table</h2>
+      <div className="mt-6">
+        {graphData && (
+          <div className="mt-8">
+            <h2 className="text-3xl font-bold mb-4">NFA Graph</h2>
+            <Graph graph={graphData} options={graphOptions} />
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 overflow-x-auto">
+        <h2 className="text-3xl font-bold mb-4">Transition Table</h2>
         <table className="w-full border-collapse border border-gray-500">
           <thead>
-            <tr>
-              <th className="p-2 border border-gray-500">Current State</th>
-              <th className="p-2 border border-gray-500">Input</th>
-              <th className="p-2 border border-gray-500">Next State</th>
+            <tr className="bg-blue-500 text-white">
+              <th className="p-3">Current State</th>
+              <th className="p-3">Input</th>
+              <th className="p-3">Next State</th>
             </tr>
           </thead>
           <tbody>
             {transitionTable.map((row, index) => (
-              <tr key={index}>
-                <td className="p-2 border border-gray-500">{`q[${row[0]}]`}</td>
-                <td className="p-2 border border-gray-500">
-                  {["a", "b", "e"][row[1]]}
+              <tr key={index} className={index % 2 === 0 ? "bg-gray-100" : ""}>
+                <td className="p-3">{`q[${row[0]}]`}</td>
+                <td className="p-3">{["a", "b", "e"][row[1]]}</td>
+                <td className="p-3">
+                  {row.length === 3
+                    ? `q[${row[2]}]`
+                    : `q[${row[2]}], q[${row[3]}]`}
                 </td>
-                {row.length === 3 ? (
-                  <td className="p-2 border border-gray-500">{`q[${row[2]}]`}</td>
-                ) : (
-                  <td className="p-2 border border-gray-500">{`q[${row[2]}], q[${row[3]}]`}</td>
-                )}
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="mt-8">
-        {graphData && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">NFA Graph</h2>
-            <Graph graph={graphData} options={graphOptions} />
-          </div>
-        )}
       </div>
     </div>
   );
