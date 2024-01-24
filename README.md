@@ -1,7 +1,6 @@
 ## แปลง Regular Expression เป็น NFA
 
-เข้าชมเว็บไซต์: [https://regex-to-dmzc1p63a-ong22280.vercel.app/](https://regex-to-dmzc1p63a-ong22280.vercel.app/)
-
+เข้าชมเว็บไซต์: [https://regex-to-nfa.vercel.app/](https://regex-to-nfa.vercel.app/)
 ## สมาชิกในกลุ่ม
 
 | รหัสนักศึกษา | ชื่อ-นามสกุล |
