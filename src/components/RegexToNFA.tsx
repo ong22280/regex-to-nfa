@@ -11,7 +11,7 @@ const RegexToNFA: React.FC = () => {
   useEffect(() => {
     if (transitionTable.length > 0) {
       const newGraphData = getGraphData();
-      console.log(newGraphData); // Check if data is correct
+      console.log("Graph Data:", newGraphData); // Check if data is correct
       setGraphData(newGraphData);
     }
   }, [transitionTable]);
@@ -115,7 +115,7 @@ const RegexToNFA: React.FC = () => {
           ]);
       }
     }
-
+    console.log("Transition Table:", newTransitionTable);
     setTransitionTable(newTransitionTable);
   };
 
@@ -128,6 +128,7 @@ const RegexToNFA: React.FC = () => {
     edges.length = 0;
 
     const addNode = (id: number, label: string, color?: string) => {
+      // Check if the node with the same id already exists
       if (nodes.findIndex((node) => node.id === id) === -1) {
         nodes.push({ id, label, color });
       }
@@ -159,10 +160,23 @@ const RegexToNFA: React.FC = () => {
         addEdge(from, to1, "b");
       } else if (input === 2) {
         if (to2) {
-          addEdge(from, to1, "e");
-          addEdge(from, to2, "e");
+          // Check if the edge already exists
+          if (!edges.find((edge) => edge.from === from && edge.to === to1)) {
+            addEdge(from, to1, "e");
+          }
+          // Check if the edge already exists
+          if (!edges.find((edge) => edge.from === from && edge.to === to2)) {
+            addEdge(from, to2, "e");
+          }
+
+          if (!edges.find((edge) => edge.from === to2 && edge.to === from)) {
+            addEdge(to2, from, "e");
+          }
         } else {
-          addEdge(from, to1, "e");
+          // Check if the edge already exists
+          if (!edges.find((edge) => edge.from === from && edge.to === to1)) {
+            addEdge(from, to1, "e");
+          }
         }
       }
     }
@@ -171,7 +185,9 @@ const RegexToNFA: React.FC = () => {
     const lastState = transitionTable.length + 1;
     addNode(lastState, `q[${lastState}]`, "green"); // Set the color for the accept state
 
-    console.log(nodes, edges);
+    console.log("Transition Table in getGraphData:", transitionTable);
+    console.log("Nodes:", nodes);
+    console.log("Edges:", edges);
 
     return {
       nodes,
@@ -197,10 +213,14 @@ const RegexToNFA: React.FC = () => {
       </h1>
       <label className="block mb-6">
         <span className="block text-xl mb-2">Enter Regular Expression:</span>
+        <span className="block text-sm mb-2 text-gray-500">
+          accept only a, b, (, ), |, *
+        </span>
         <input
           className="border p-3 w-full rounded-md focus:outline-none focus:ring focus:border-blue-500"
           type="text"
           value={regex}
+          placeholder="(a|b)*abb"
           onChange={(e) => setRegex(e.target.value)}
         />
       </label>

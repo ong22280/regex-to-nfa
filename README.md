@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## แปลง Regular Expression เป็น NFA
 
-## Getting Started
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. การกำหนดข้อมูลเริ่มต้น (Initialization):
+   - `const q: number[][] = [];`: สร้าง array q เพื่อเก็บข้อมูลของ state ของ NFA
+2. การอ่าน Regular Expression:
+   - ใช้ลูป `while` เพื่ออ่าน Regular Expression ทีละตัวอักษร
+3. กำหนด Transition สำหรับแต่ละตัวอักษร:
+   - ใช้เงื่อนไขต่าง ๆ เพื่อกำหนด transition สำหรับ `a, b, e, a|b, b|a, a*, b*, )*` ใน NFA
+4. สร้าง Transition Table:
+   - จัดเก็บข้อมูล transition table ใน `newTransitionTable` โดยใช้ข้อมูลจาก array q
+5. อัพเดท State ด้วย setTransitionTable:
+   - อัพเดท state ด้วย `setTransitionTable` โดยให้ใช้ transition table ที่ได้จากขั้นตอนก่อนหน้า
+
+การใช้เลข 10 เป็นตัวคั่นในการแทน a|b และการใช้เลข 10 เป็นตัวหารในการแยก states ใน a* และ b*
+
+```js
+const convertToNFA = () => {
+  // สร้างเก็บข้อมูลของ state ของ NFA
+  const q: number[][] = [];
+  const MAX_STATES = 20;
+
+  // กำหนดค่าเริ่มต้นของ state
+  for (let a = 0; a < MAX_STATES; a++) {
+    q[a] = [0, 0, 0];
+  }
+
+  // อ่าน Regular Expression ทีละตัวอักษร
+  const len = regex.length;
+  let i = 0;
+  let j = 1;
+
+  while (i < len) {
+    // กำหนด transition สำหรับ a
+    if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+      q[j][0] = j + 1;
+      j++;
+    }
+
+    // กำหนด transition สำหรับ b
+    if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+      q[j][1] = j + 1;
+      j++;
+    }
+
+    // กำหนด transition สำหรับ e (epsilon)
+    if (regex[i] === "e" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+      q[j][2] = j + 1;
+      j++;
+    }
+
+    // กำหนด transition สำหรับ a|b
+    if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
+      q[j][2] = (j + 1) * 10 + (j + 3);
+      j++;
+      q[j][0] = j + 1;
+      j++;
+      q[j][2] = j + 3;
+      j++;
+      q[j][1] = j + 1;
+      j++;
+      q[j][2] = j + 1;
+      j++;
+      i = i + 2;
+    }
+
+    // กำหนด transition สำหรับ b|a
+    if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
+      q[j][2] = (j + 1) * 10 + (j + 3);
+      j++;
+      q[j][1] = j + 1;
+      j++;
+      q[j][2] = j + 3;
+      j++;
+      q[j][0] = j + 1;
+      j++;
+      q[j][2] = j + 1;
+      j++;
+      i = i + 2;
+    }
+
+    // กำหนด transition สำหรับ a*
+    if (regex[i] === "a" && regex[i + 1] === "*") {
+      q[j][2] = (j + 1) * 10 + (j + 3);
+      j++;
+      q[j][0] = j + 1;
+      j++;
+      q[j][2] = (j + 1) * 10 + (j - 1);
+      j++;
+    }
+
+    // กำหนด transition สำหรับ b*
+    if (regex[i] === "b" && regex[i + 1] === "*") {
+      q[j][2] = (j + 1) * 10 + (j + 3);
+      j++;
+      q[j][1] = j + 1;
+      j++;
+      q[j][2] = (j + 1) * 10 + (j - 1);
+      j++;
+    }
+
+    // กำหนด transition สำหรับ )*
+    if (regex[i] === ")" && regex[i + 1] === "*") {
+      q[0][2] = (j + 1) * 10 + 1;
+      q[j][2] = (j + 1) * 10 + 1;
+      j++;
+    }
+
+    i++;
+  }
+
+  // สร้าง transition table จากข้อมูลที่ได้
+  const newTransitionTable: number[][] = [];
+
+  for (let i = 0; i <= j; i++) {
+    if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
+    if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
+    if (q[i][2] !== 0) {
+      if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
+      else
+        newTransitionTable.push([i, 2, Math.floor(q[i][2] / 10), q[i][2] % 10]);
+    }
+  }
+
+  // อัพเดท transition table ใน state
+  setTransitionTable(newTransitionTable);
+};
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## สมาชิกในกลุ่ม
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+| รหัสนักศึกษา | ชื่อ-นามสกุล |
+| --- | --- |
+| 6210402401 | นาย ธนกฤต ศรีเกียรติ |
+| 6210402402 | นาย ธนวัฒน์ ศรีเกียรติ |
+| 6210402403 | นาย ธนากร ศรีเกียรติ |
+| 6210402404 | นาย ธนากร ศรีเกียรติ |
