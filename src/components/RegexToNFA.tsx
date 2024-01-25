@@ -207,60 +207,95 @@ const RegexToNFA: React.FC = () => {
       <h1 className="text-4xl font-bold mb-6 text-center text-blue-700">
         Regex to NFA Converter
       </h1>
+      <p className="text-center text-gray-500 mb-6">
+        By | 6410401183 | 6410402121 | 6410406568 | 6410406878
+      </p>
+
       <label className="block mb-6">
         <span className="block text-xl mb-2">Enter Regular Expression:</span>
         <span className="block text-sm mb-2 text-gray-500">
           accept only a, b, (, ), |, *
         </span>
+      </label>
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
         <input
-          className="border p-3 w-full rounded-md focus:outline-none focus:ring focus:border-blue-500"
+          className="border p-3 w-full md:w-full md:mr-2 rounded-md focus:outline-none focus:ring focus:border-blue-500"
           type="text"
           value={regex}
           placeholder="(a|b)*abb"
           onChange={(e) => setRegex(e.target.value)}
         />
-      </label>
-      <button
-        className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-300 w-full md:w-auto"
-        onClick={convertToNFA}
-      >
-        Convert to NFA
-      </button>
+        <button
+          className="bg-blue-500 text-white px-6  rounded-md hover:bg-blue-700 transition duration-300 w-full md:w-auto"
+          onClick={convertToNFA}
+        >
+          Convert to NFA
+        </button>
+      </div>
 
-      <div className="mt-6">
-        {graphData && (
-          <div className="mt-8 h-96">
-            <h2 className="text-3xl font-bold mb-4">NFA Graph</h2>
-            <Graph graph={graphData} options={graphOptions} />
+      {/* if have transition table */}
+      {transitionTable.length > 0 && (
+        <>
+          <div className="mt-6 overflow-x-auto">
+            {/* Q = set of states, E = set of input symbols, q0 = start state, F = set of final states */}
+            <h2 className="text-2xl font-bold mb-4">NFA description</h2>
+            <p className="text-gray-500 mb-2">
+              Q = {transitionTable.map((row) => row[0]).join(", ")}
+            </p>
+
+            <p className="text-gray-500 mb-2">E = {["a", "b"].join(", ")}</p>
+
+            <p className="text-gray-500 mb-2">q0 = q[0]</p>
+
+            <p className="text-gray-500 mb-2">
+              F = {transitionTable.length + 1}
+            </p>
+
+            <h2 className="text-2xl font-bold mb-4">Transition Table</h2>
+            <table className="w-full border-collapse border border-gray-500">
+              <thead>
+                <tr className="bg-blue-500 text-white">
+                  <th className="p-3">Current State</th>
+                  <th className="p-3">Input</th>
+                  <th className="p-3">Next State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transitionTable.map((row, index) => (
+                  <tr
+                    key={index}
+                    className={index % 2 === 0 ? "bg-gray-100" : ""}
+                  >
+                    <td className="p-3">{`q[${row[0]}]`}</td>
+                    <td className="p-3">{["a", "b", "e"][row[1]]}</td>
+                    <td className="p-3">
+                      {row.length === 3
+                        ? `q[${row[2]}]`
+                        : `q[${row[2]}], q[${row[3]}]`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <h2 className="text-3xl font-bold mb-4">Transition Table</h2>
-        <table className="w-full border-collapse border border-gray-500">
-          <thead>
-            <tr className="bg-blue-500 text-white">
-              <th className="p-3">Current State</th>
-              <th className="p-3">Input</th>
-              <th className="p-3">Next State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transitionTable.map((row, index) => (
-              <tr key={index} className={index % 2 === 0 ? "bg-gray-100" : ""}>
-                <td className="p-3">{`q[${row[0]}]`}</td>
-                <td className="p-3">{["a", "b", "e"][row[1]]}</td>
-                <td className="p-3">
-                  {row.length === 3
-                    ? `q[${row[2]}]`
-                    : `q[${row[2]}], q[${row[3]}]`}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          <div className="mt-6">
+            {graphData && (
+              <div className="mt-8 h-96">
+                <h2 className="text-2xl font-bold mb-4">NFA Graph</h2>
+                <Graph graph={graphData} options={graphOptions} />
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* if no transition table */}
+      {transitionTable.length === 0 && (
+        <div className="mt-6">
+          <p className="text-center text-gray-500 mb-2">please enter regex</p>
+        </div>
+      )}
     </div>
   );
 };
