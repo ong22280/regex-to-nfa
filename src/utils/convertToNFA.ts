@@ -30,10 +30,14 @@ const convertToNFA = (regex: string) => {
   let i = 0;
   let s = 0;
 
+   // สำหรับนับ state ที่ใช้ทั้งหมด
+   let st = 0;
+
   const handleSingleCharacter = () => {
     if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
       q[s][0] = s + 1;
       s++;
+      st += 1;
     }
 
     // เมื่อเจอ b โดยที่ไม่มี | และ * ต่อท้าย
@@ -42,6 +46,7 @@ const convertToNFA = (regex: string) => {
       q[s][1] = s + 1; // 1 คือ b
       // เพิ่ม state ไปอีก 1 เพื่อให้เป็น state ถัดไป
       s++;
+      st += 1;
     }
 
     // เมื่อเจอ a โดยที่มี | และ b ต่อท้าย
@@ -52,28 +57,36 @@ const convertToNFA = (regex: string) => {
       // หมายถึง ถ้าเจอ ε ให้ไป state 2 และ 4 พร้อมกัน
       // จะคำนวนในส่วนที่หาร 10 ลงตัว คือ 2 และ 4 คือ 4 จะได้ว่า
       s++;
+      st += 2;
       q[s][0] = s + 1; // s=2 a ให้ไป state 2 + 1 = 3
       s++;
+      st += 1;
       q[s][2] = s + 3; // s=3 ε ให้ไป state 3 + 3 = 6
       s++;
       q[s][1] = s + 1; // s=4 b ให้ไป state 4 + 1 = 5
       s++;
+      st += 1;
       q[s][2] = s + 1; // s=5 ε ให้ไป state 5 + 1 = 6
       s++;
+      st += 1;
       i = i + 2; // เพิ่ม i ไปอีก 2 เพื่อข้าม | และ b
     }
 
     if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
       q[s][2] = (s + 1) * 10 + (s + 3);
       s++;
+      st += 2;
       q[s][1] = s + 1;
       s++;
+      st += 1;
       q[s][2] = s + 3;
       s++;
       q[s][0] = s + 1;
       s++;
+      st += 1;
       q[s][2] = s + 1;
       s++;
+      st += 1;
       i = i + 2;
     }
 
@@ -85,19 +98,25 @@ const convertToNFA = (regex: string) => {
       // หมายถึง ถ้าเจอ ε ให้ไป state 2 และ 4 พร้อมกัน
       // จะคำนวนในส่วนที่หาร 10 ลงตัว คือ 2 และ 4 คือ 4 จะได้ว่า
       s++;
+      st += 2;
       q[s][0] = s + 1;
       s++;
+      st += 1;
       q[s][2] = (s + 1) * 10 + (s - 1);
       s++;
+      st += 1;
     }
 
     if (regex[i] === "b" && regex[i + 1] === "*") {
       q[s][2] = (s + 1) * 10 + (s + 3);
       s++;
+      st += 2;
       q[s][1] = s + 1;
       s++;
+      st += 1;
       q[s][2] = (s + 1) * 10 + (s - 1);
       s++;
+      st += 1;
     }
 
     i++; // เพิ่ม i ไปอีก 1 เพื่อให้เป็นตัวอักษรถัดไป
@@ -128,12 +147,18 @@ const convertToNFA = (regex: string) => {
         q[s][2] = groupEnd * 10 + (groupStart + 1);
         s++;
       }
+      if (regex[i] === "|") {
+        q[groupStart][2] = (groupEnd + 1) * 10 + (groupStart + st +2);
+        q[s][2] = (groupEnd + 1) * 10 + (groupStart + st +2);
+        s++;
+      }
       else {
         q[groupStart][2] = groupStart + 1;
         q[s][2] = groupEnd;
         s+=2;
       }
     }
+    st = 0;
     handleSingleCharacter();
   }
 
