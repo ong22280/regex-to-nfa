@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Graph from "react-graph-vis";
+import convertToNFA from "@/utils/convertToNFA";
+import getGraphData from "@/utils/getGraphData";
 
 const RegexToNFA: React.FC = () => {
   const [regex, setRegex] = useState<string>("");
@@ -10,305 +12,224 @@ const RegexToNFA: React.FC = () => {
 
   useEffect(() => {
     if (transitionTable.length > 0) {
-      const newGraphData = getGraphData();
+      const newGraphData = getGraphData(transitionTable);
       // console.log("Graph Data:", newGraphData); // Check if data is correct
       setGraphData(newGraphData);
     }
   }, [transitionTable]);
+  //   // q เป็น array 2 มิติที่ใช้เก็บข้อมูลการเปลี่ยนแปลงของ state ที่เป็น array
+  //   const q: number[][] = [];
+  //   // โครงสร้างข้อมูลของ q จะเป็นแบบนี้
+  //   // [
+  //   //   [
+  //   //     1, // ถ้าเจอ a ให้ไป state 1
+  //   //     2, // ถ้าเจอ b ให้ไป state 2
+  //   //     3, // ถ้าเจอ ε ให้ไป state 3
+  //   //   ],
+  //   //   [
 
-  const convertToNFA = () => {
-    // q เป็น array 2 มิติที่ใช้เก็บข้อมูลการเปลี่ยนแปลงของ state ที่เป็น array
-    const q: number[][] = [];
-    // โครงสร้างข้อมูลของ q จะเป็นแบบนี้
-    // [
-    //   [
-    //     1, // ถ้าเจอ a ให้ไป state 1
-    //     2, // ถ้าเจอ b ให้ไป state 2
-    //     3, // ถ้าเจอ ε ให้ไป state 3
-    //   ],
-    //   [
+  //   // ให้ q[0] คือ state 0 ที่เป็น state เริ่มต้น
+  //   // q[0] = [1, 2, 3];
+  //   // หมายถึง q[0] มี ข้อมูลของ state คือ
+  //   // 1 คือ ถ้าเจอ a ให้ไป state 1
+  //   // 2 คือ ถ้าเจอ b ให้ไป state 2
+  //   // 3 คือ ถ้าเจอ ε ให้ไป state 3
 
-    // ให้ q[0] คือ state 0 ที่เป็น state เริ่มต้น
-    // q[0] = [1, 2, 3];
-    // หมายถึง q[0] มี ข้อมูลของ state คือ
-    // 1 คือ ถ้าเจอ a ให้ไป state 1
-    // 2 คือ ถ้าเจอ b ให้ไป state 2
-    // 3 คือ ถ้าเจอ ε ให้ไป state 3
+  //   // console.log("q:", q);
 
-    // console.log("q:", q);
+  //   // จำนวน state สูงสุดที่เป็นไปได้ เพื่อให้กำหนดค่าเริ่มต้นให้กับ q
+  //   const MAX_STATES = 20;
 
-    // จำนวน state สูงสุดที่เป็นไปได้ เพื่อให้กำหนดค่าเริ่มต้นให้กับ q
-    const MAX_STATES = 20;
+  //   for (let a = 0; a < MAX_STATES; a++) {
+  //     q[a] = [0, 0, 0];
+  //   }
 
-    for (let a = 0; a < MAX_STATES; a++) {
-      q[a] = [0, 0, 0];
-    }
+  //   const len = regex.length;
+  //   let i = 0;
+  //   let s = 0;
 
-    const len = regex.length;
-    let i = 0;
-    let s = 0;
+  //   const handleGroup = () => {
+  //     const groupStart = s;
+  //     let groupEnd = 0;
+  //     while (i < len && regex[i] !== ")") {
+  //       if (regex[i] === "(") {
+  //         s++;
+  //       }
+  //       if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+  //         q[s][0] = s + 1;
+  //         s++;
+  //       }
+  //       if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+  //         q[s][1] = s + 1;
+  //         s++;
+  //       }
+  //       if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
+  //         q[s][2] = (s + 1) * 10 + (s + 3);
+  //         s++;
+  //         q[s][0] = s + 1;
+  //         s++;
+  //         q[s][2] = s + 3;
+  //         s++;
+  //         q[s][1] = s + 1;
+  //         s++;
+  //         q[s][2] = s + 1;
+  //         s++;
+  //         i = i + 2;
+  //       }
+  //       if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
+  //         q[s][2] = (s + 1) * 10 + (s + 3);
+  //         s++;
+  //         q[s][1] = s + 1;
+  //         s++;
+  //         q[s][2] = s + 3;
+  //         s++;
+  //         q[s][0] = s + 1;
+  //         s++;
+  //         q[s][2] = s + 1;
+  //         s++;
+  //         i = i + 2;
+  //       }
+  //       if (regex[i] === "a" && regex[i + 1] === "*") {
+  //         q[s][2] = (s + 1) * 10 + (s + 3);
+  //         s++;
+  //         q[s][0] = s + 1;
+  //         s++;
+  //         q[s][2] = (s + 1) * 10 + (s - 1);
+  //         s++;
+  //       }
+  //       if (regex[i] === "b" && regex[i + 1] === "*") {
+  //         q[s][2] = (s + 1) * 10 + (s + 3);
+  //         s++;
+  //         q[s][1] = s + 1;
+  //         s++;
+  //         q[s][2] = (s + 1) * 10 + (s - 1);
+  //         s++;
+  //       }
+  //       i++;
+  //     }
+  //     groupEnd = s + 1;
+  //     i++;
+  //     return [groupStart, groupEnd];
+  //   };
 
-    const handleGroup = () => {
-      const groupStart = s;
-      let groupEnd = 0;
-      while (i < len && regex[i] !== ")") {
-        if (regex[i] === "(") {
-          s++;
-        }
-        if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-          q[s][0] = s + 1;
-          s++;
-        }
-        if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-          q[s][1] = s + 1;
-          s++;
-        }
-        if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
-          q[s][2] = (s + 1) * 10 + (s + 3);
-          s++;
-          q[s][0] = s + 1;
-          s++;
-          q[s][2] = s + 3;
-          s++;
-          q[s][1] = s + 1;
-          s++;
-          q[s][2] = s + 1;
-          s++;
-          i = i + 2;
-        }
-        if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
-          q[s][2] = (s + 1) * 10 + (s + 3);
-          s++;
-          q[s][1] = s + 1;
-          s++;
-          q[s][2] = s + 3;
-          s++;
-          q[s][0] = s + 1;
-          s++;
-          q[s][2] = s + 1;
-          s++;
-          i = i + 2;
-        }
-        if (regex[i] === "a" && regex[i + 1] === "*") {
-          q[s][2] = (s + 1) * 10 + (s + 3);
-          s++;
-          q[s][0] = s + 1;
-          s++;
-          q[s][2] = (s + 1) * 10 + (s - 1);
-          s++;
-        }
-        if (regex[i] === "b" && regex[i + 1] === "*") {
-          q[s][2] = (s + 1) * 10 + (s + 3);
-          s++;
-          q[s][1] = s + 1;
-          s++;
-          q[s][2] = (s + 1) * 10 + (s - 1);
-          s++;
-        }
-        i++;
-      }
-      groupEnd = s + 1;
-      i++;
-      return [groupStart, groupEnd];
-    };
+  //   while (i < len) {
+  //     if (regex[i] === "(") {
+  //       const [groupStart, groupEnd] = handleGroup();
+  //       if (regex[i] === "*") {
+  //         q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
+  //         q[s][2] = groupEnd;
+  //         s++;
+  //       }
+  //     }
 
-    while (i < len) {
-      if (regex[i] === "(") {
-        const [groupStart, groupEnd] = handleGroup();
-        if (regex[i] === "*") {
-          q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
-          q[s][2] = groupEnd;
-          s++;
-        }
-      }
+  //     if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+  //       q[s][0] = s + 1;
+  //       s++;
+  //     }
 
-      if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-        q[s][0] = s + 1;
-        s++;
-      }
+  //     // เมื่อเจอ b โดยที่ไม่มี | และ * ต่อท้าย
+  //     if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+  //       // ให้ q[s][1] คือ state ที่ s ถ้าเจอ b ให้ไป state s+1
+  //       q[s][1] = s + 1; // 1 คือ b
+  //       // เพิ่ม state ไปอีก 1 เพื่อให้เป็น state ถัดไป
+  //       s++;
+  //     }
 
-      // เมื่อเจอ b โดยที่ไม่มี | และ * ต่อท้าย
-      if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-        // ให้ q[s][1] คือ state ที่ s ถ้าเจอ b ให้ไป state s+1
-        q[s][1] = s + 1; // 1 คือ b
-        // เพิ่ม state ไปอีก 1 เพื่อให้เป็น state ถัดไป
-        s++;
-      }
+  //     // เมื่อเจอ a โดยที่มี | และ b ต่อท้าย
+  //     if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
+  //       // สำหรับ transition ที่เป็น ε ให้ไป s ที่ (s + 1) * 10 + (s + 3)
+  //       q[s][2] = (s + 1) * 10 + (s + 3);
+  //       // สมมุติให้ state = 1 และ q[1][2] = 24
+  //       // หมายถึง ถ้าเจอ ε ให้ไป state 2 และ 4 พร้อมกัน
+  //       // จะคำนวนในส่วนที่หาร 10 ลงตัว คือ 2 และ 4 คือ 4 จะได้ว่า
+  //       s++;
+  //       q[s][0] = s + 1; // s=2 a ให้ไป state 2 + 1 = 3
+  //       s++;
+  //       q[s][2] = s + 3; // s=3 ε ให้ไป state 3 + 3 = 6
+  //       s++;
+  //       q[s][1] = s + 1; // s=4 b ให้ไป state 4 + 1 = 5
+  //       s++;
+  //       q[s][2] = s + 1; // s=5 ε ให้ไป state 5 + 1 = 6
+  //       s++;
+  //       i = i + 2; // เพิ่ม i ไปอีก 2 เพื่อข้าม | และ b
+  //     }
 
-      // เมื่อเจอ a โดยที่มี | และ b ต่อท้าย
-      if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
-        // สำหรับ transition ที่เป็น ε ให้ไป s ที่ (s + 1) * 10 + (s + 3)
-        q[s][2] = (s + 1) * 10 + (s + 3);
-        // สมมุติให้ state = 1 และ q[1][2] = 24
-        // หมายถึง ถ้าเจอ ε ให้ไป state 2 และ 4 พร้อมกัน
-        // จะคำนวนในส่วนที่หาร 10 ลงตัว คือ 2 และ 4 คือ 4 จะได้ว่า
-        s++;
-        q[s][0] = s + 1; // s=2 a ให้ไป state 2 + 1 = 3
-        s++;
-        q[s][2] = s + 3; // s=3 ε ให้ไป state 3 + 3 = 6
-        s++;
-        q[s][1] = s + 1; // s=4 b ให้ไป state 4 + 1 = 5
-        s++;
-        q[s][2] = s + 1; // s=5 ε ให้ไป state 5 + 1 = 6
-        s++;
-        i = i + 2; // เพิ่ม i ไปอีก 2 เพื่อข้าม | และ b
-      }
+  //     if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
+  //       q[s][2] = (s + 1) * 10 + (s + 3);
+  //       s++;
+  //       q[s][1] = s + 1;
+  //       s++;
+  //       q[s][2] = s + 3;
+  //       s++;
+  //       q[s][0] = s + 1;
+  //       s++;
+  //       q[s][2] = s + 1;
+  //       s++;
+  //       i = i + 2;
+  //     }
 
-      if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
-        q[s][2] = (s + 1) * 10 + (s + 3);
-        s++;
-        q[s][1] = s + 1;
-        s++;
-        q[s][2] = s + 3;
-        s++;
-        q[s][0] = s + 1;
-        s++;
-        q[s][2] = s + 1;
-        s++;
-        i = i + 2;
-      }
+  //     // เมื่อเจอ a โดยที่มี * ต่อท้าย
+  //     if (regex[i] === "a" && regex[i + 1] === "*") {
+  //       q[s][2] = (s + 1) * 10 + (s + 3);
+  //       //
+  //       // สมมุติให้ s = 1 และ q[1][2] = 24
+  //       // หมายถึง ถ้าเจอ ε ให้ไป state 2 และ 4 พร้อมกัน
+  //       // จะคำนวนในส่วนที่หาร 10 ลงตัว คือ 2 และ 4 คือ 4 จะได้ว่า
+  //       s++;
+  //       q[s][0] = s + 1;
+  //       s++;
+  //       q[s][2] = (s + 1) * 10 + (s - 1);
+  //       s++;
+  //     }
 
-      // เมื่อเจอ a โดยที่มี * ต่อท้าย
-      if (regex[i] === "a" && regex[i + 1] === "*") {
-        q[s][2] = (s + 1) * 10 + (s + 3);
-        //
-        // สมมุติให้ s = 1 และ q[1][2] = 24
-        // หมายถึง ถ้าเจอ ε ให้ไป state 2 และ 4 พร้อมกัน
-        // จะคำนวนในส่วนที่หาร 10 ลงตัว คือ 2 และ 4 คือ 4 จะได้ว่า
-        s++;
-        q[s][0] = s + 1;
-        s++;
-        q[s][2] = (s + 1) * 10 + (s - 1);
-        s++;
-      }
+  //     if (regex[i] === "b" && regex[i + 1] === "*") {
+  //       q[s][2] = (s + 1) * 10 + (s + 3);
+  //       s++;
+  //       q[s][1] = s + 1;
+  //       s++;
+  //       q[s][2] = (s + 1) * 10 + (s - 1);
+  //       s++;
+  //     }
 
-      if (regex[i] === "b" && regex[i + 1] === "*") {
-        q[s][2] = (s + 1) * 10 + (s + 3);
-        s++;
-        q[s][1] = s + 1;
-        s++;
-        q[s][2] = (s + 1) * 10 + (s - 1);
-        s++;
-      }
+  //     i++; // เพิ่ม i ไปอีก 1 เพื่อให้เป็นตัวอักษรถัดไป
+  //   }
 
-      i++; // เพิ่ม i ไปอีก 1 เพื่อให้เป็นตัวอักษรถัดไป
-    }
+  //   const newTransitionTable: number[][] = [];
+  //   // โครงสร้างข้อมูลของ newTransitionTable จะเป็นแบบนี้
+  //   // [
+  //   //   [0, 0, 1], // คือ state 0 ถ้าเจอ a ให้ไป state 1
+  //   //   [1, 1, 2], // คือ state 1 ถ้าเจอ b ให้ไป state 2
+  //   //   [2, 2, 3], // คือ state 2 ถ้าเจอ ε ให้ไป state 3
+  //   // ],
 
-    const newTransitionTable: number[][] = [];
-    // โครงสร้างข้อมูลของ newTransitionTable จะเป็นแบบนี้
-    // [
-    //   [0, 0, 1], // คือ state 0 ถ้าเจอ a ให้ไป state 1
-    //   [1, 1, 2], // คือ state 1 ถ้าเจอ b ให้ไป state 2
-    //   [2, 2, 3], // คือ state 2 ถ้าเจอ ε ให้ไป state 3
-    // ],
+  //   for (let i = 0; i <= s; i++) {
+  //     // ถ้า q[i][0] ไม่เท่ากับ 0 หมายความว่า ถ้าเจอ a ให้ไป state q[i][0]
+  //     if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
+  //     /*
+  //       i: เป็นสถานะปัจจุบันของ NFA ที่กำลังพิจารณา
+  //       0: หมายถึงการรับอักขระ "a" เพื่อทำการเปลี่ยนสถานะ
+  //       q[i][0]: เป็นสถานะที่ NFA จะเปลี่ยนไปหลังจากที่รับอักขระ "a"
+  //     */
+  //     if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
+  //     if (q[i][2] !== 0) {
+  //       // ถ้า q[i][2] น้อยกว่า 10 หมายความว่า ε มี transition ไป state เดียว
+  //       if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
+  //       else
+  //         newTransitionTable.push([
+  //           i,
+  //           2,
+  //           // ถ้า q[i][2] = 24
+  //           Math.floor(q[i][2] / 10), // จะได้ 2
+  //           q[i][2] % 10, // จะได้ 4
+  //         ]);
+  //     }
+  
+  //   }
+  //   console.log("q:", q);
 
-    for (let i = 0; i <= s; i++) {
-      // ถ้า q[i][0] ไม่เท่ากับ 0 หมายความว่า ถ้าเจอ a ให้ไป state q[i][0]
-      if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
-      /*
-        i: เป็นสถานะปัจจุบันของ NFA ที่กำลังพิจารณา
-        0: หมายถึงการรับอักขระ "a" เพื่อทำการเปลี่ยนสถานะ
-        q[i][0]: เป็นสถานะที่ NFA จะเปลี่ยนไปหลังจากที่รับอักขระ "a"
-      */
-      if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
-      if (q[i][2] !== 0) {
-        // ถ้า q[i][2] น้อยกว่า 10 หมายความว่า ε มี transition ไป state เดียว
-        if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
-        else
-          newTransitionTable.push([
-            i,
-            2,
-            // ถ้า q[i][2] = 24
-            Math.floor(q[i][2] / 10), // จะได้ 2
-            q[i][2] % 10, // จะได้ 4
-          ]);
-      }
-    }
-    for (let i = 0; i <= s; i++) {
-      // ถ้า q[i][0] ไม่เท่ากับ 0 หมายความว่า ถ้าเจอ a ให้ไป state q[i][0]
-      if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
-      /*
-        i: เป็นสถานะปัจจุบันของ NFA ที่กำลังพิจารณา
-        0: หมายถึงการรับอักขระ "a" เพื่อทำการเปลี่ยนสถานะ
-        q[i][0]: เป็นสถานะที่ NFA จะเปลี่ยนไปหลังจากที่รับอักขระ "a"
-      */
-      if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
-      if (q[i][2] !== 0) {
-        // ถ้า q[i][2] น้อยกว่า 10 หมายความว่า ε มี transition ไป state เดียว
-        if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
-        else
-          newTransitionTable.push([
-            i,
-            2,
-            // ถ้า q[i][2] = 24
-            Math.floor(q[i][2] / 10), // จะได้ 2
-            q[i][2] % 10, // จะได้ 4
-          ]);
-      }
-    }
-    console.log("q:", q);
-
-    // console.log("Transition Table:", newTransitionTable);
-    setTransitionTable(newTransitionTable);
-  };
-
-  const getGraphData = (): any => {
-    type Node = {
-      id: number;
-      label: string;
-      color?: string;
-    };
-    type Edge = {
-      from: number;
-      to: number | string;
-      label: string;
-    };
-    const nodes: Node[] = [];
-    const edges: Edge[] = [];
-
-    // เพิม่ start state
-    const START_STATE = -1; // -1 เพื่อไม่ให้มี state ที่ซ้ำกับ state 0
-    nodes.push({ id: START_STATE, label: `start` });
-    edges.push({
-      from: START_STATE,
-      to: transitionTable[0][0],
-      label: "start",
-    });
-
-    for (let i = 0; i < transitionTable.length; i++) {
-      const [from, symbol, to1, to2] = transitionTable[i];
-      // เพิ่ม node
-      nodes.push({ id: from, label: `q[${from}]` });
-      // เพิ่ม edge
-      if (symbol === 0) {
-        edges.push({ from, to: to1, label: "a" });
-      } else if (symbol === 1) {
-        edges.push({ from, to: to1, label: "b" });
-      } else if (symbol === 2) {
-        if (to2) {
-          if (!edges.find((edge) => edge.from === from && edge.to === to1)) {
-            edges.push({ from, to: to1, label: "ε" });
-          }
-          if (!edges.find((edge) => edge.from === from && edge.to === to2)) {
-            edges.push({ from, to: to2, label: "ε" });
-          }
-        } else {
-          if (!edges.find((edge) => edge.from === from && edge.to === to1)) {
-            edges.push({ from, to: to1, label: "ε" });
-          }
-        }
-      }
-    }
-
-    // เพิ่ม final state
-    const lastState = transitionTable.length;
-    nodes.push({ id: lastState, label: `q[${lastState}]`, color: "green" });
-
-    return {
-      nodes,
-      edges,
-    };
-  };
+  //   // console.log("Transition Table:", newTransitionTable);
+  //   setTransitionTable(newTransitionTable);
+  // };
 
   const graphOptions = {
     layout: {
@@ -320,6 +241,11 @@ const RegexToNFA: React.FC = () => {
       },
     },
   };
+
+  const submitHandler = () => {
+    const newTransitionTable = convertToNFA(regex);
+    setTransitionTable(newTransitionTable);
+  }
 
   return (
     <div className="container mx-auto my-8 p-8">
@@ -354,7 +280,7 @@ const RegexToNFA: React.FC = () => {
         />
         <button
           className="bg-blue-500 text-white px-6  rounded-md hover:bg-blue-700 transition duration-300 w-full md:w-auto"
-          onClick={convertToNFA}
+          onClick={submitHandler}
         >
           Convert to NFA
         </button>

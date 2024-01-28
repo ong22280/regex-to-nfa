@@ -48,29 +48,8 @@ const convertToNFA = () => {
   let i = 0;
   let s = 1;
 
-  // สำหรับหาจุดเริ่มต้นและจุดสิ้นสุดของ group เพื่อทำ transition สำหรับ ()
-  const handleGroup = () => {
-    const groupStart = s;
-    let groupEnd = 0;
-    while (i < len && regex[i] !== ")") {
-      // กำหนด transition เหมือนด้านล่าง
-    }
-    groupEnd = s + 1;
-    i++;
-    return [groupStart, groupEnd];
-  };
-
-  while (i < len) {
-    // กำหนด transition สำหรับ ()
-    if (regex[i] === "(") {
-      const [groupStart, groupEnd] = handleGroup();
-      if (regex[i] === "*") {
-        q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
-        q[s][2] = groupEnd;
-        s++;
-      }
-    }
-
+  // จัดการ
+  const handleSingleCharacter = () => {
     // กำหนด transition สำหรับ a
     if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
       q[s][0] = s + 1; // ไปยัง state ถัดไป
@@ -134,6 +113,31 @@ const convertToNFA = () => {
     }
 
     i++;
+  };
+
+  // สำหรับหาจุดเริ่มต้นและจุดสิ้นสุดของ group เพื่อทำ transition สำหรับ ()
+  const handleGroup = () => {
+    const groupStart = s;
+    let groupEnd = 0;
+    while (i < len && regex[i] !== ")") {
+      handleSingleCharacter();
+    }
+    groupEnd = s + 1;
+    i++;
+    return [groupStart, groupEnd];
+  };
+
+  while (i < len) {
+    // กำหนด transition สำหรับ ()
+    if (regex[i] === "(") {
+      const [groupStart, groupEnd] = handleGroup();
+      if (regex[i] === "*") {
+        q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
+        q[s][2] = groupEnd;
+        s++;
+      }
+    }
+    handleSingleCharacter();
   }
 
   // สร้าง transition table จากข้อมูลที่ได้
