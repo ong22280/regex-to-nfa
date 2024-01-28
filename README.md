@@ -15,7 +15,7 @@
 ## วิธีการทำ
 
 1. กำหนดตัวแปรและค่าเริ่มต้น:
-   - `q`: เป็น array ที่ใช้เก็บข้อมูลของ state ของ NFA โดยแต่ละ state จะมี transition สำหรับ `a`, `b`, และ `e` (epsilon)
+   - `q`: เป็น array ที่ใช้เก็บข้อมูลของ state ของ NFA โดยแต่ละ state จะมี transition สำหรับ `a`, `b`, และ `ε` (epsilon)
    - `MAX_STATES`: ค่าคงที่ที่กำหนดขนาดของ q ซึ่งในที่นี้คือ 20
    - `i` และ `j`: เป็นตัวแปรที่ใช้ในการวน loop ที่อ่าน Regular Expression
 2. วน Loop อ่าน Regular Expression:
@@ -59,8 +59,8 @@ const convertToNFA = () => {
       j++;
     }
 
-    // กำหนด transition สำหรับ e (epsilon)
-    if (regex[i] === "e" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
+    // กำหนด transition สำหรับ ε (epsilon)
+    if (regex[i] === "ε" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
       q[j][2] = j + 1; // ไปยัง state ถัดไป
       j++;
     }
@@ -134,7 +134,7 @@ const convertToNFA = () => {
     if (q[i][2] !== 0) {
       if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
       else
-        newTransitionTable.push([i, 2, Math.floor(q[i][2] / 10), q[i][2] % 10]);
+        newTransitionTable.push([i, 2, q[i][2] / 10, q[i][2] % 10]);
     }
   }
 
