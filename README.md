@@ -19,7 +19,7 @@
 
 1. กำหนดตัวแปรและค่าเริ่มต้น:
    - `q`: เป็น array ที่ใช้เก็บข้อมูลของ state ของ NFA โดยแต่ละ state จะมี transition สำหรับ `a`, `b`, และ `ε` (epsilon)
-   - `i` และ `j`: เป็นตัวแปรที่ใช้ในการวน loop ที่อ่าน Regular Expression
+   - `i` และ `s`: เป็นตัวแปรที่ใช้ในการวน loop ที่อ่าน Regular Expression
 2. วน Loop อ่าน Regular Expression:
    - ในแต่ละรอบของ loop, โค้ดจะตรวจสอบ Regular Expression ทีละตัวอักษรและทำการกำหนด transition ตามเงื่อนไขที่กำหนด
 3. กำหนด Transition และ State:
@@ -32,6 +32,10 @@
 const convertToNFA = () => {
   // สร้างเก็บข้อมูลของ state ของ NFA
   const q: number[][] = [];
+  /* ให้ค่า q[*][0] หมายถึง หากรับinput transition เป็น a ให้ไป state ใด
+    q[*][1] แทน b
+    q[*][2] แทน ε
+  */
   const MAX_STATES = 20;
 
   // กำหนดค่าเริ่มต้นของ state
@@ -42,18 +46,19 @@ const convertToNFA = () => {
   // อ่าน Regular Expression ทีละตัวอักษร
   const len = regex.length;
   let i = 0;
-  let j = 1;
+  let s = 1;
 
-      const handleGroup = () => {
-      const groupStart = s;
-      let groupEnd = 0;
-      while (i < len && regex[i] !== ")") {
-        // กำหนด transition เหมือนด้านล่าง
-      }
-      groupEnd = s + 1;
-      i++;
-      return [groupStart, groupEnd];
-    };
+  // สำหรับหาจุดเริ่มต้นและจุดสิ้นสุดของ group เพื่อทำ transition สำหรับ ()
+  const handleGroup = () => {
+    const groupStart = s;
+    let groupEnd = 0;
+    while (i < len && regex[i] !== ")") {
+      // กำหนด transition เหมือนด้านล่าง
+    }
+    groupEnd = s + 1;
+    i++;
+    return [groupStart, groupEnd];
+  };
 
   while (i < len) {
     // กำหนด transition สำหรับ ()
@@ -68,70 +73,64 @@ const convertToNFA = () => {
 
     // กำหนด transition สำหรับ a
     if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-      q[j][0] = j + 1; // ไปยัง state ถัดไป
-      j++;
+      q[s][0] = s + 1; // ไปยัง state ถัดไป
+      s++;
     }
 
     // กำหนด transition สำหรับ b
     if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-      q[j][1] = j + 1; // ไปยัง state ถัดไป
-      j++;
-    }
-
-    // กำหนด transition สำหรับ ε (epsilon)
-    if (regex[i] === "ε" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-      q[j][2] = j + 1; // ไปยัง state ถัดไป
-      j++;
+      q[s][1] = s + 1; // ไปยัง state ถัดไป
+      s++;
     }
 
     // กำหนด transition สำหรับ a|b
     if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
-      q[j][2] = (j + 1) * 10 + (j + 3); // ไปยัง state ถัดไปหลัง | (บวก 10 เพื่อแยก)
-      j++;
-      q[j][0] = j + 1; // ไปยัง state ถัดไป
-      j++;
-      q[j][2] = j + 3; // ไปยัง state หลัง b
-      j++;
-      q[j][1] = j + 1; // ไปยัง state ถัดไปหลัง a
-      j++;
-      q[j][2] = j + 1; // ไปยัง state ถัดไป
-      j++;
-      i = i + 2; // ข้าม a|b
+      q[s][2] = (s + 1) * 10 + (s + 3); // ไปยัง 2 state
+      s++;
+      q[s][0] = s + 1; // ไปยัง state บนด้วย a
+      s++;
+      q[s][2] = s + 3; // ไปยัง state ถัดไปด้วย ε
+      s++;
+      q[s][1] = s + 1; // ไปยัง state ล่างหลัง b
+      s++;
+      q[s][2] = s + 1; // ไปยัง state ถัดไปด้วย ε
+      s++;
+      i = i + 2; // ข้าม |b
     }
 
     // กำหนด transition สำหรับ b|a
     if (regex[i] === "b" && regex[i + 1] === "|" && regex[i + 2] === "a") {
-      q[j][2] = (j + 1) * 10 + (j + 3); // ไปยัง state ถัดไปหลัง | (บวก 10 เพื่อแยก)
-      j++;
-      q[j][1] = j + 1; // ไปยัง state ถัดไป
-      j++;
-      q[j][2] = j + 3; // ไปยัง state หลัง a
-      j++;
-      q[j][0] = j + 1; // ไปยัง state ถัดไปหลัง b
-      j++;
-      q[j][2] = j + 1; // ไปยัง state ถัดไป
-      j++;
-      i = i + 2; // ข้าม b|a
+      q[s][2] = (s + 1) * 10 + (s + 3); // ไปยัง 2 state
+      s++;
+      q[s][1] = s + 1; // ไปยัง state บนด้วย b
+      s++;
+      q[s][2] = s + 3; // ไปยัง state ถัดไปด้วย ε
+      s++;
+      q[s][0] = s + 1; // ไปยัง state ล่างหลัง a
+      s++;
+      q[s][2] = s + 1; // ไปยัง state ถัดไปด้วย ε
+      s++;
+      i = i + 2; // ข้าม |a
     }
 
     // กำหนด transition สำหรับ a*
     if (regex[i] === "a" && regex[i + 1] === "*") {
-      q[j][2] = (j + 1) * 10 + (j + 3); // ไปยัง state ถัดไปหลัง * (บวก 10 เพื่อแยก)
-      j++;
-      q[j][0] = j + 1; // ไปยัง state ถัดไป
-      j++;
-      q[j][2] = (j + 1) * 10 + (j - 1); // กลับไปยัง state ก่อนหน้า * (บวก 10 เพื่อแยก)
-      j++;
+      q[s][2] = (s + 1) * 10 + (s + 3); // ไปยัง 2 state
+      s++;
+      q[s][0] = s + 1; // ไปยัง state ถัดไป
+      s++;
+      q[s][2] = (s + 1) * 10 + (s - 1); // กลับไปยัง state ก่อนหน้า
+      s++;
     }
 
     // กำหนด transition สำหรับ b*
     if (regex[i] === "b" && regex[i + 1] === "*") {
-      q[j][2] = (j + 1) * 10 + (j + 3); // ไปยัง state ถัดไปหลัง * (บวก 10 เพื่อแยก)
-      j++;
-      q[j][1] = j + 1; // ไปยัง state ถัดไป
-      j++;
-      q[j][2] = (j + 1) * 10 + (j - 1); // กลับไปยัง state ก่อนหน้า * (บวก 10 เพื่อแยก)
-      j++;
+      q[s][2] = (s + 1) * 10 + (s + 3); // ไปยัง 2 state
+      s++;
+      q[s][1] = s + 1; // ไปยัง state ถัดไป
+      s++;
+      q[s][2] = (s + 1) * 10 + (s - 1); // กลับไปยัง state ก่อนหน้า
+      s++;
     }
 
     i++;
@@ -139,8 +138,13 @@ const convertToNFA = () => {
 
   // สร้าง transition table จากข้อมูลที่ได้
   const newTransitionTable: number[][] = [];
+  /* ให้ค่า newTransitionTable[*][0] แทน state ต้นทาง
+    newTransitionTable[*][1] แทน input
+    newTransitionTable[*][2] แทน state ปลายทาง
+    newTransitionTable[*][3] แทน state ปลายทางเพิ่มเติม (ถ้ามี)
+  */
 
-  for (let i = 0; i <= j; i++) {
+  for (let i = 0; i <= s; i++) {
     if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
     if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
     if (q[i][2] !== 0) {
