@@ -133,11 +133,16 @@ const convertToNFA = () => {
       const [groupStart, groupEnd] = handleGroup();
       if (regex[i] === "*") {
         q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
-        q[s][2] = groupEnd;
+        q[s][2] = groupEnd * 10 + (groupStart + 1);
         s++;
+      } else {
+        q[groupStart][2] = groupStart + 1;
+        q[s][2] = groupEnd;
+        s += 2;
       }
     }
     handleSingleCharacter();
+    s++;
   }
 
   // สร้าง transition table จากข้อมูลที่ได้

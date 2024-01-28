@@ -120,14 +120,18 @@ const convertToNFA = (regex: string) => {
   while (i < len) {
     if (regex[i] === "(") {
       const [groupStart, groupEnd] = handleGroup();
+      console.log("groupStart:", groupStart);
+      console.log("groupEnd:", groupEnd);
+      console.log("s:", s);
       if (regex[i] === "*") {
         q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
-        q[s][2] = groupEnd;
+        q[s][2] = groupEnd * 10 + (groupStart + 1);
         s++;
       }
-
-      if (regex[i] === "|") {
-        // ทำตรงนี้นะ
+      else {
+        q[groupStart][2] = groupStart + 1;
+        q[s][2] = groupEnd;
+        s+=2;
       }
     }
     handleSingleCharacter();
