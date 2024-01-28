@@ -60,7 +60,7 @@ const RegexToNFA: React.FC = () => {
           s++;
         }
         if (regex[i] === "b" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-          q[s][1] = s + 1; 
+          q[s][1] = s + 1;
           s++;
         }
         if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
@@ -135,14 +135,6 @@ const RegexToNFA: React.FC = () => {
         s++;
       }
 
-      // // เมื่อเจอ ε โดยที่ไม่มี | และ * ต่อท้าย
-      // if (regex[i] === "ε" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
-      //   // ให้ q[s][2] คือ state ที่ s ถ้าเจอ ε ให้ไป state s+1
-      //   q[s][2] = s + 1; // 2 คือ ε
-      //   // เพิ่ม state ไปอีก 1 เพื่อให้เป็น state ถัดไป
-      //   s++;
-      // }
-
       // เมื่อเจอ a โดยที่มี | และ b ต่อท้าย
       if (regex[i] === "a" && regex[i + 1] === "|" && regex[i + 2] === "b") {
         // สำหรับ transition ที่เป็น ε ให้ไป s ที่ (s + 1) * 10 + (s + 3)
@@ -205,11 +197,33 @@ const RegexToNFA: React.FC = () => {
     const newTransitionTable: number[][] = [];
     // โครงสร้างข้อมูลของ newTransitionTable จะเป็นแบบนี้
     // [
-    //   [0, 0, 1], // ถ้าเจอ a ให้ไป state 1
-    //   [1, 1, 2], // ถ้าเจอ b ให้ไป state 2
-    //   [2, 2, 3], // ถ้าเจอ ε ให้ไป state 3
+    //   [0, 0, 1], // คือ state 0 ถ้าเจอ a ให้ไป state 1
+    //   [1, 1, 2], // คือ state 1 ถ้าเจอ b ให้ไป state 2
+    //   [2, 2, 3], // คือ state 2 ถ้าเจอ ε ให้ไป state 3
     // ],
 
+    for (let i = 0; i <= s; i++) {
+      // ถ้า q[i][0] ไม่เท่ากับ 0 หมายความว่า ถ้าเจอ a ให้ไป state q[i][0]
+      if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
+      /*
+        i: เป็นสถานะปัจจุบันของ NFA ที่กำลังพิจารณา
+        0: หมายถึงการรับอักขระ "a" เพื่อทำการเปลี่ยนสถานะ
+        q[i][0]: เป็นสถานะที่ NFA จะเปลี่ยนไปหลังจากที่รับอักขระ "a"
+      */
+      if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
+      if (q[i][2] !== 0) {
+        // ถ้า q[i][2] น้อยกว่า 10 หมายความว่า ε มี transition ไป state เดียว
+        if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
+        else
+          newTransitionTable.push([
+            i,
+            2,
+            // ถ้า q[i][2] = 24
+            Math.floor(q[i][2] / 10), // จะได้ 2
+            q[i][2] % 10, // จะได้ 4
+          ]);
+      }
+    }
     for (let i = 0; i <= s; i++) {
       // ถ้า q[i][0] ไม่เท่ากับ 0 หมายความว่า ถ้าเจอ a ให้ไป state q[i][0]
       if (q[i][0] !== 0) newTransitionTable.push([i, 0, q[i][0]]);
@@ -239,70 +253,56 @@ const RegexToNFA: React.FC = () => {
   };
 
   const getGraphData = (): any => {
-    const nodes: any[] = [];
-    const edges: any[] = [];
-
-    // Reset nodes and edges arrays
-    nodes.length = 0;
-    edges.length = 0;
-
-    const addNode = (id: number, label: string, color?: string) => {
-      // Check if the node with the same id already exists
-      if (nodes.findIndex((node) => node.id === id) === -1) {
-        nodes.push({ id, label, color });
-      }
+    type Node = {
+      id: number;
+      label: string;
+      color?: string;
     };
-
-    const addEdge = (from: number, to: number | string, label: string) => {
-      edges.push({ from, to, label });
+    type Edge = {
+      from: number;
+      to: number | string;
+      label: string;
     };
+    const nodes: Node[] = [];
+    const edges: Edge[] = [];
 
-    // Add a special start state
-    const startState = -1;
-    addNode(startState, `start`);
-
-    // Add edges from the new start state to the first state of transitionTable
-    const firstState =
-      transitionTable.length > 0 ? transitionTable[0][0] : null;
-    if (firstState !== null) {
-      addEdge(startState, firstState, "start");
-    }
+    // เพิม่ start state
+    const START_STATE = -1; // -1 เพื่อไม่ให้มี state ที่ซ้ำกับ state 0
+    nodes.push({ id: START_STATE, label: `start` });
+    edges.push({
+      from: START_STATE,
+      to: transitionTable[0][0],
+      label: "start",
+    });
 
     for (let i = 0; i < transitionTable.length; i++) {
-      const [from, input, to1, to2] = transitionTable[i];
-
-      addNode(from, `q[${from}]`);
-
-      if (input === 0) {
-        addEdge(from, to1, "a");
-      } else if (input === 1) {
-        addEdge(from, to1, "b");
-      } else if (input === 2) {
+      const [from, symbol, to1, to2] = transitionTable[i];
+      // เพิ่ม node
+      nodes.push({ id: from, label: `q[${from}]` });
+      // เพิ่ม edge
+      if (symbol === 0) {
+        edges.push({ from, to: to1, label: "a" });
+      } else if (symbol === 1) {
+        edges.push({ from, to: to1, label: "b" });
+      } else if (symbol === 2) {
         if (to2) {
-          // Check if the edge already exists
           if (!edges.find((edge) => edge.from === from && edge.to === to1)) {
-            addEdge(from, to1, "ε");
+            edges.push({ from, to: to1, label: "ε" });
           }
-          // Check if the edge already exists
           if (!edges.find((edge) => edge.from === from && edge.to === to2)) {
-            addEdge(from, to2, "ε");
+            edges.push({ from, to: to2, label: "ε" });
           }
         } else {
-          // Check if the edge already exists
           if (!edges.find((edge) => edge.from === from && edge.to === to1)) {
-            addEdge(from, to1, "ε");
+            edges.push({ from, to: to1, label: "ε" });
           }
         }
       }
     }
 
-    // Add a final transition to a special accept state
+    // เพิ่ม final state
     const lastState = transitionTable.length;
-    addNode(lastState, `q[${lastState}]`, "green"); // Set the color for the accept state
-
-    // console.log("Transition Table in getGraphData:", transitionTable);
-    // console.log("Nodes:", nodes);
-    // console.log("Edges:", edges);
+    nodes.push({ id: lastState, label: `q[${lastState}]`, color: "green" });
 
     return {
       nodes,
@@ -375,10 +375,10 @@ const RegexToNFA: React.FC = () => {
 
             <p className="text-gray-500 mb-2">E = {["a", "b"].join(", ")}</p>
 
-            <p className="text-gray-500 mb-2">S = q[1]</p>
+            <p className="text-gray-500 mb-2">S = q[0]</p>
 
             <p className="text-gray-500 mb-2">
-              F = q{transitionTable.length}
+              F = q[{transitionTable.length}]
             </p>
 
             <h2 className="text-2xl font-bold mb-4">Transition Table</h2>

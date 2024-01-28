@@ -1,6 +1,9 @@
 ## แปลง Regular Expression เป็น NFA
 
 เข้าชมเว็บไซต์: [https://regex-to-nfa.vercel.app/](https://regex-to-nfa.vercel.app/)
+
+สไลด์: [https://www.canva.com/design/DAF7J1P6RiY/PNPS_4BKP_pWRMHSiRq3Zg/edit?utm_content=DAF7J1P6RiY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton](https://www.canva.com/design/DAF7J1P6RiY/PNPS_4BKP_pWRMHSiRq3Zg/edit?utm_content=DAF7J1P6RiY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+
 ## สมาชิกในกลุ่ม
 
 | รหัสนักศึกษา | ชื่อ-นามสกุล              |
@@ -16,19 +19,14 @@
 
 1. กำหนดตัวแปรและค่าเริ่มต้น:
    - `q`: เป็น array ที่ใช้เก็บข้อมูลของ state ของ NFA โดยแต่ละ state จะมี transition สำหรับ `a`, `b`, และ `ε` (epsilon)
-   - `MAX_STATES`: ค่าคงที่ที่กำหนดขนาดของ q ซึ่งในที่นี้คือ 20
    - `i` และ `j`: เป็นตัวแปรที่ใช้ในการวน loop ที่อ่าน Regular Expression
 2. วน Loop อ่าน Regular Expression:
    - ในแต่ละรอบของ loop, โค้ดจะตรวจสอบ Regular Expression ทีละตัวอักษรและทำการกำหนด transition ตามเงื่อนไขที่กำหนด
-   - ตัวอย่างเช่น ถ้าพบ `a` และตัวถัดไปไม่ใช่ `|` หรือ `*` จะกำหนด transition สำหรับ `a`
 3. กำหนด Transition และ State:
    - การกำหนด transition ใน `q` จะเกิดตามลำดับที่กำหนดใน Regular Expression และ state จะเพิ่มตามลำดับที่เข้าไปใน transition
-   - สำหรับ `a|b`, `b|a`, `a*`, `b*`, และ `)*` จะมีการกำหนด transition และ state ตามลำดับที่ระบุใน Regular Expression
 4. สร้าง Transition Table:
    - จากข้อมูลใน `q`, จะถูกใช้ในการสร้าง transition table `newTransitionTable` ซึ่งเก็บข้อมูลเป็นรูปแบบ `[from, input, to1, to2]`
    - การเขียนค่าในรูปแบบ `x * 10 + y` ใน `q` ใช้เพื่อแยกค่า `x` และ `y` เพื่อให้รู้ถึงการใช้ epsilon transitions
-
-การใช้เลข 10 เป็นตัวคั่นในการแทน a|b และการใช้เลข 10 เป็นตัวหารในการแยก states ใน a* และ b*
 
 ```js
 const convertToNFA = () => {
@@ -46,7 +44,28 @@ const convertToNFA = () => {
   let i = 0;
   let j = 1;
 
+      const handleGroup = () => {
+      const groupStart = s;
+      let groupEnd = 0;
+      while (i < len && regex[i] !== ")") {
+        // กำหนด transition เหมือนด้านล่าง
+      }
+      groupEnd = s + 1;
+      i++;
+      return [groupStart, groupEnd];
+    };
+
   while (i < len) {
+    // กำหนด transition สำหรับ ()
+    if (regex[i] === "(") {
+      const [groupStart, groupEnd] = handleGroup();
+      if (regex[i] === "*") {
+        q[groupStart][2] = groupEnd * 10 + (groupStart + 1);
+        q[s][2] = groupEnd;
+        s++;
+      }
+    }
+
     // กำหนด transition สำหรับ a
     if (regex[i] === "a" && regex[i + 1] !== "|" && regex[i + 1] !== "*") {
       q[j][0] = j + 1; // ไปยัง state ถัดไป
@@ -115,13 +134,6 @@ const convertToNFA = () => {
       j++;
     }
 
-    // กำหนด transition สำหรับ )*
-    if (regex[i] === ")" && regex[i + 1] === "*") {
-      q[0][2] = (j + 1) * 10 + 1; // ไปยัง state ถัดไปหลัง * (บวก 10 เพื่อแยก)
-      q[j][2] = (j + 1) * 10 + 1; // กลับไปยัง state ก่อนหน้า * (บวก 10 เพื่อแยก)
-      j++;
-    }
-
     i++;
   }
 
@@ -133,8 +145,7 @@ const convertToNFA = () => {
     if (q[i][1] !== 0) newTransitionTable.push([i, 1, q[i][1]]);
     if (q[i][2] !== 0) {
       if (q[i][2] < 10) newTransitionTable.push([i, 2, q[i][2]]);
-      else
-        newTransitionTable.push([i, 2, q[i][2] / 10, q[i][2] % 10]);
+      else newTransitionTable.push([i, 2, q[i][2] / 10, q[i][2] % 10]);
     }
   }
 
